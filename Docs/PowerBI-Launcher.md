@@ -206,7 +206,7 @@ Create the file in the screen's folder (`PbiLauncher\S1`), or use `-Command` fro
 | `kill.txt` | `Stop` | Stop the launcher and close Edge. |
 | `relaunch.txt` | `Relaunch` | New Edge. |
 | `refresh.txt` | `Refresh` | Reload the report. |
-| `restart.txt` | – | Restart the PC in 10 s. |
+| `restart.txt` | – | Restart the PC. Empty: after 10 s. As JSON, `{"Seconds": 60, "Message": "Back in a minute", "By": "alice"}`: after that countdown, with the message in Windows' restart notice (Kiosk Fleet Web's **Restart...** writes this). |
 | `hold.txt` | `Hold` / `Resume` | Pause: the launcher does nothing until the file is deleted. Use it to sign in by hand. |
 | `snapshot.txt` | `Snapshot` | Save a screenshot of the page as `Status\<screen>.png`, with the address, state and signed-in account in `Status\<screen>.snapshot.json`. |
 

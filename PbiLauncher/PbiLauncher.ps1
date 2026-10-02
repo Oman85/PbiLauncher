@@ -71,7 +71,8 @@
     kill.txt      stop the launcher and close Edge
     relaunch.txt  restart Edge
     refresh.txt   reload the report
-    restart.txt   restart the PC in 10 seconds
+    restart.txt   restart the PC: after 10 seconds, or the countdown and
+                  message written in it as JSON ({"Seconds":60,"Message":"..."})
     snapshot.txt  save a screenshot and a page summary in Status\
     hold.txt      pause: the launcher watches but does nothing, so someone
                   can use the browser (for example to sign in with MFA).
@@ -2444,6 +2445,28 @@ function Save-Snapshot {
     try { Write-JsonFile -Path "$base.snapshot.json" -Object $info } catch {}
 }
 
+function Read-RestartRequest {
+    # restart.txt may say how long Windows counts down and what it shows:
+    # Kiosk Fleet Web writes {"Seconds": 60, "Message": "...", "By": "..."}.
+    # An empty or plain-text file is the old request: 10 s, no message.
+    param([Parameter(Mandatory)][string]$Path)
+    $req = @{ Seconds = 10; Message = ''; By = '' }
+    try {
+        $text = [IO.File]::ReadAllText($Path).Trim()
+        if (-not $text.StartsWith('{')) { return $req }
+        $j = $text | ConvertFrom-Json
+        $props = $j.PSObject.Properties
+        $n = 0
+        if ($props['Seconds'] -and [int]::TryParse([string]$j.Seconds, [ref]$n)) { $req.Seconds = [math]::Max(0, [math]::Min(3600, $n)) }
+        if ($props['Message'] -and $j.Message) { $req.Message = (([string]$j.Message) -replace '\s+', ' ').Trim() }
+        if ($props['By'] -and $j.By) { $req.By = ([string]$j.By).Trim() }
+    }
+    catch {
+        Write-Log ("restart.txt could not be read ({0}); restarting in 10 s." -f $_.Exception.Message) 'WARN'
+    }
+    return $req
+}
+
 function Invoke-ControlFiles {
     # Returns 'exit', 'hold', 'restarting' or ''.
     param([Parameter(Mandatory)]$Config)
@@ -2464,10 +2487,16 @@ function Invoke-ControlFiles {
     }
 
     $restart = Join-Path $Here 'restart.txt'
-    if ((Test-Path -LiteralPath $restart) -and (Remove-ControlFile $restart)) {
-        Stop-Browser -Config $Config -Why 'restart.txt'
-        Invoke-PcRestart -Why 'remote restart request (restart.txt)' -DelaySeconds 10
-        return 'restarting'
+    if (Test-Path -LiteralPath $restart) {
+        # Read before it is deleted: the countdown and message are in it.
+        $req = Read-RestartRequest $restart
+        if (Remove-ControlFile $restart) {
+            Stop-Browser -Config $Config -Why 'restart.txt'
+            $why = if ($req.Message) { $req.Message } else { 'remote restart request (restart.txt)' }
+            if ($req.By) { $why = "$why - asked by $($req.By)" }
+            Invoke-PcRestart -Why $why -DelaySeconds $req.Seconds
+            return 'restarting'
+        }
     }
 
     $relaunch = Join-Path $Here 'relaunch.txt'
