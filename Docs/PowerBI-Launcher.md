@@ -6,12 +6,12 @@ Part of [Kiosk Fleet](../README.md): the fleet collector reports each launcher's
 
 ```
  logon ─► Startup\PBI Launcher S1.lnk ─► conhost ─► powershell (hidden) ─► PbiLauncher.ps1 -Instance S1
-                                                                             │
-     C:\Users\Public\Documents\PbiLauncher\                                  │ DevTools protocol
-       PbiLauncher.ps1                                                       │ 127.0.0.1 only
-       S1\  <HOST>.json   settings (old 1.0.0.3 files work as they are)       ▼
-            <HOST>.cred   sign-in password, DPAPI-encrypted for the kiosk  Microsoft Edge, full screen,
-            Status\       status file, read by Get-PbiLauncherStatus      InPrivate ─► Power BI report
+                                                                               │
+     C:\Users\Public\Documents\PbiLauncher\                                    │ DevTools protocol
+       PbiLauncher.ps1                                                         │ 127.0.0.1 only
+       S1\  <HOST>.json   settings (old 1.0.0.3 files work as they are)        ▼
+            <HOST>.cred   sign-in password, DPAPI-encrypted for the kiosk      Microsoft Edge, full screen,
+            Status\       status file, read by Get-PbiLauncherStatus           InPrivate ─► Power BI report
             Logs\         CMTrace log (also copied to RemoteLogPath)
        S2\  ...           a second screen, if the kiosk has one
 ```
